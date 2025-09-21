@@ -1,58 +1,61 @@
 package spring.learning.posdemo.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.annotation.SessionScope;
 import spring.learning.posdemo.models.CartItem;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 @Service
+@SessionScope
 public class CartService {
-    private final HashMap<String, CartItem> cart;
+    private final Map<String, CartItem> cart = new HashMap<>();
 
-    public CartService() {
-        cart = new HashMap<>();
-    }
-
-    // เพิ่มสินค้าด้วยการแสกน
-    public void scanItem(String barcode, CartItem item){
-        // ถ้ามีสินค้าอยู่แล้ว --> +1 ให้กับจำนวนสินค้านั้น
-        if (cart.containsKey(barcode)){
-            cart.get(barcode).setQty(cart.get(barcode).getQty() + 1);
+    public void scanItem(String barcode, CartItem item) {
+        if (cart.containsKey(barcode)) {
+            addOne(barcode);
         }
-        // ถ้ายังไม่มีสินค้า --> เพิ่มสินค้าใน Cart
-        else{
+        else {
             cart.put(barcode, item);
         }
     }
 
-    public void addOneQty(CartItem item){
-        try{
-            item.setQty(item.getQty() + 1);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+    public void addOne(String barcode) {
+        CartItem item = cart.get(barcode);
+        setQty(item, item.getQty() + 1);
     }
 
-    public void removeOneQty(CartItem item){
-        if (item.getQty() > 1){
-            item.setQty(item.getQty() - 1);
+    public void removeOne(String barcode) {
+        CartItem item = cart.get(barcode);
+        setQty(item, item.getQty() - 1);
+    }
+
+    public void setQty(CartItem item, int qty){
+        if (qty > item.getQtyOnHand()) {
+            throw new IllegalArgumentException("Don' have enough stock");
         }
-        else{
+
+        else if (qty <= 0) {
             cart.remove(item.getBarcode());
         }
+        else {
+            item.setQty(qty);
+        }
     }
 
-    public double getTotal() {
+    public Collection<CartItem> getCartItems() {
+        return cart.values();
+    }
+
+    public Double getTotal() {
         return cart.values().stream()
-                .mapToDouble(CartItem::getTotalPrice)
+                .mapToDouble(CartItem::getSubTotal)
                 .sum();
     }
-    public void clearCart(){
-        cart.clear();
-    }
 
-    public Collection<CartItem> getCart(){
-        return cart.values();
+    public void clear() {
+        cart.clear();
     }
 }
