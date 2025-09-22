@@ -8,7 +8,7 @@ import spring.learning.posdemo.service.CartService;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/cart")
+@RequestMapping("api/cart")
 public class CartController {
     private final CartService cartService;
 
